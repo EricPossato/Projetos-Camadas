@@ -21,6 +21,3 @@ class Header:
         elif self.tipo == 3:
             header = bytearray([self.tipo, self.h1, self.h2, self.total_pacotes, self.index_pacote, self.tamanho, self.pacote_reenvio, self.ultimo_pacote, self.h8, self.h9])
         return header
-
-header = Header(1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-print(header.bytearray_header())
