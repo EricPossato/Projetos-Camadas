@@ -10,10 +10,11 @@
 #para acompanhar a execução e identificar erros, construa prints ao longo do código! 
 
 
+from operator import index
 from enlace import *
 import time
 import numpy as np
-
+from functions import *
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
 #   python -m serial.tools.list_ports
@@ -23,84 +24,95 @@ import numpy as np
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
 serialName = "COM3"                  # Windows(variacao de)
-
-imageR = "ealp.png"
-imageW = "copia.png"
+EOP = b'\xAA\xBB\xCC\xDD'
 
 def main():
     try:
+        arquivo = b''
         print("Iniciou o main")
-        #declaramos um objeto do tipo enlace com o nome "com". Essa é a camada inferior à aplicação. Observe que um parametro
-        #para declarar esse objeto é o nome da porta.
         com1 = enlace(serialName)
-        
-    
-        # Ativa comunicacao. Inicia os threads e a comunicação serial 
         com1.enable()
-        #Se chegamos até aqui, a comunicação foi aberta com sucesso. Faça um print para informar.
         print("Abriu a comunicação")
-        
-           
-                  
-        #aqui você deverá gerar os dados a serem transmitidos. 
-        #seus dados a serem transmitidos são um array bytes a serem transmitidos. Gere esta lista com o 
-        #nome de txBuffer. Esla sempre irá armazenar os dados a serem enviados.
 
-        print("Carregando imagem...")
-        print("- {}".format(imageR))
-        print("---------------------------------")
+        #byte sacrificio
+        print("esperando 1 byte de sacrifício")
+        rxBuffer, nRx = com1.getData(1)
+        com1.rx.clearBuffer()
+        time.sleep(.1)
         
-        #txBuffer = imagem em bytes!
-        txBuffer = open(imageR, 'rb').read()  #isso é um array de bytes
-       
-        print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
-        #faça aqui uma conferência do tamanho do seu txBuffer, ou seja, quantos bytes serão enviados.
-       
+
+        print("esperando mensagem")
+        ocioso = True
+        while ocioso:
+            head, nRx = com1.getData(10)
+            time.sleep(.1)
+            print(f"{head}")
+            if head[0] == 1 and head[5] == 1:
+                ocioso = False
+            com1.rx.clearBuffer()
+            time.sleep(1)
+        msg_t2 = package_generator(2,0,0,1,0,0, payload = b'')
+        com1.sendData(msg_t2)
+        print(f'Na escuta')
+        cont = 1
+
+        numPck = head[3]
+
+        while cont <= numPck:
+            #timeout de 20 segundos
+            start = time.time()
+            while (com1.rx.getIsEmpty() and (time.time() - start) < 20):
+                pass
+            if (com1.rx.getIsEmpty()):
+                ocioso = True
+                msg_t5 = package_generator(5,0,0,1,0,0, payload = b'')
+                com1.sendData(msg_t5)
+                print("-------------------------")
+                print("Comunicação encerrada")
+                print("-------------------------")
+                com1.disable()
+                exit()
             
-        #finalmente vamos transmitir os todos. Para isso usamos a funçao sendData que é um método da camada enlace.
-        #faça um print para avisar que a transmissão vai começar.
-        #tente entender como o método send funciona!
-        #Cuidado! Apenas trasmita arrays de bytes!
-               
-        
-        com1.sendData(np.asarray(txBuffer))  #as array apenas como boa pratica para casos de ter uma outra forma de dados
-          
-        # A camada enlace possui uma camada inferior, TX possui um método para conhecermos o status da transmissão
-        # O método não deve estar fincionando quando usado como abaixo. deve estar retornando zero. Tente entender como esse método funciona e faça-o funcionar.
+            #recepção do pacote
+            else:
+                head, nRx = com1.getData(10)
+                time.sleep(.1)
 
-        while com1.tx.getIsBussy():
-            pass
-        txSize = com1.tx.getStatus()
-        print('enviou = {}' .format(txSize))
-        
-        #Agora vamos iniciar a recepção dos dados. Se algo chegou ao RX, deve estar automaticamente guardado
-        #Observe o que faz a rotina dentro do thread RX
-        #print um aviso de que a recepção vai começar.
-        
-        #Será que todos os bytes enviados estão realmente guardadas? Será que conseguimos verificar?
-        #Veja o que faz a funcao do enlaceRX  getBufferLen
-      
-        #acesso aos bytes recebidos
-        txLen = len(txBuffer)
-        rxBuffer, nRx = com1.getData(txLen)
-        print("recebeu {} bytes" .format(len(rxBuffer)))
-        
-        for i in range(len(rxBuffer)):
-            print("recebeu {}" .format(rxBuffer[i]))
-        
+                indexPck = head[4]
+                tamanho = head[5]
 
-        print("Salvando imagem")
-        print(" - {}".format(imageW))
-        with open(imageW, 'wb') as f:
-            f.write(rxBuffer)
+                payload, nRx = com1.getData(tamanho)
+                time.sleep(.1)
 
-            
+                eop, nRx = com1.getData(4)
+                time.sleep(.1)
+                print(f"Indice do packote atual:{cont}")
+
+                #verifica erro no pacote
+                if indexPck != cont or eop != EOP:
+                    msg_t6 = package_generator(6,0,0,1,cont,cont-1, payload = b'')
+                    com1.sendData(msg_t6)
+                    print("Pacote corrompido")
+                    com1.rx.clearBuffer()
+                    time.sleep(.1)
+                else:
+                    arquivo += payload
+                    msg_t4 = package_generator(4,0,0,1,0,cont, payload = b'')
+                    com1.sendData(msg_t4)
+                    time.sleep(0.1)
+                    cont += 1
+
     
         # Encerra comunicação
         print("-------------------------")
         print("Comunicação encerrada")
         print("-------------------------")
         com1.disable()
+
+        if arquivo != '':
+            with open('imgRecebida.png', 'wb') as f:
+                f.write(arquivo)
+                print("Arquivo recebido")
         
     except Exception as erro:
         print("ops! :-\\")
