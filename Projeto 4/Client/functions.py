@@ -17,9 +17,9 @@ def separa_imagem(img):
         list_payloads.append(payload)
     return list_payloads
 
-def package_generator(h0, h3, h4, h5, h7, payload):
+def package_generator(h0, h3, h4, h5, h6, h7, payload):
     if h0 == 3:
         h5 = len(payload)
-    head = head_generator(h0=h0, h3=h3, h4=h4, h5=h5, h7=h7)
+    head = head_generator(h0=h0, h3=h3, h4=h4, h5=h5, h6=h6, h7=h7)
     EOP = b'\xAA\xBB\xCC\xDD'
     return head + payload + EOP
