@@ -1,113 +1,99 @@
-#####################################################
-# Camada Física da Computação
-#Carareto
-#11/08/2022
-#Aplicação
-####################################################
-
-
-#esta é a camada superior, de aplicação do seu software de comunicação serial UART.
-#para acompanhar a execução e identificar erros, construa prints ao longo do código! 
-
-
 from enlace import *
 import time
 import numpy as np
+from functions import *
 
-# voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
-#   para saber a sua porta, execute no terminal :
-#   python -m serial.tools.list_ports
-# se estiver usando windows, o gerenciador de dispositivos informa a porta
+serialName = "COM6"      
 
-#use uma das 3 opcoes para atribuir à variável a porta usada
-#serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
-#serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM3"                  # Windows(variacao de)
+com1 = enlace(serialName)
 
-imageR = "ealp.png"
-imageW = "copia.png"
+'''
+Bytes do head:
+h0 = tipo da mensagem
+h1 - livre
+h2 - livre
+h3 = número total de pacotes
+h4 = index do pacote que está sendo enviado
+h5 = id if (handshake) else tamanho do payload
+h6 = pacote solicitado para reenvio
+h7 = index do ultimo pacote recebido com sucesso (h4-1)
+h8 = livre
+h9 = livre
+
+Tipos de mensagem:
+tipo 1 = handshake
+tipo 2 = mensagem enviada pelo servidor confirmando handshake
+
+'''
 
 def main():
-    try:
-        print("Iniciou o main")
-        #declaramos um objeto do tipo enlace com o nome "com". Essa é a camada inferior à aplicação. Observe que um parametro
-        #para declarar esse objeto é o nome da porta.
-        com1 = enlace(serialName)
-        
-    
-        # Ativa comunicacao. Inicia os threads e a comunicação serial 
-        com1.enable()
-        #Se chegamos até aqui, a comunicação foi aberta com sucesso. Faça um print para informar.
-        print("Abriu a comunicação")
-        
-           
-                  
-        #aqui você deverá gerar os dados a serem transmitidos. 
-        #seus dados a serem transmitidos são um array bytes a serem transmitidos. Gere esta lista com o 
-        #nome de txBuffer. Esla sempre irá armazenar os dados a serem enviados.
 
-        print("Carregando imagem...")
-        print("- {}".format(imageR))
-        print("---------------------------------")
-        
-        #txBuffer = imagem em bytes!
-        txBuffer = open(imageR, 'rb').read()  #isso é um array de bytes
-       
-        print("meu array de bytes tem tamanho {}" .format(len(txBuffer)))
-        #faça aqui uma conferência do tamanho do seu txBuffer, ou seja, quantos bytes serão enviados.
-       
-            
-        #finalmente vamos transmitir os todos. Para isso usamos a funçao sendData que é um método da camada enlace.
-        #faça um print para avisar que a transmissão vai começar.
-        #tente entender como o método send funciona!
-        #Cuidado! Apenas trasmita arrays de bytes!
-               
-        
-        com1.sendData(np.asarray(txBuffer))  #as array apenas como boa pratica para casos de ter uma outra forma de dados
-          
-        # A camada enlace possui uma camada inferior, TX possui um método para conhecermos o status da transmissão
-        # O método não deve estar fincionando quando usado como abaixo. deve estar retornando zero. Tente entender como esse método funciona e faça-o funcionar.
+    payload_list = separa_imagem('Projeto 4/Client/gragas.png')
+    numPck = len(payload_list)
 
-        while com1.tx.getIsBussy():
+    print("Tamanho da lista: " + str(numPck))
+
+    com1.enable()
+    time.sleep(.2)
+    inicia = False
+    cont = 0
+
+    print("----------------------------")
+    print("Enviando bit de sacrificio: ")
+    print("----------------------------")
+    com1.sendData(b'00')
+    print("Bit de sacrificio enviado com sucesso!")
+    time.sleep(.1)
+
+    while not(inicia):
+        print("Iniciando o handshake...")
+        handshake = package_generator(1,numPck,0,1,0,0,b'')
+        com1.sendData(handshake)
+        print("Handshake enviado!")
+        time.sleep(5)
+        if not(com1.rx.getIsEmpty()):
+            rxBuffer, nRx = com1.getData(14)
+            if rxBuffer[0] == 2 and rxBuffer[5] == 1:
+                print("Handshake realizado com sucesso!")
+                inicia = True
+                cont = 1
+        com1.rx.clearBuffer()
+
+    while cont <= numPck:   
+        print("----------------------------")
+        print("Enviando pacote: ")
+        print("----------------------------")
+        payload = payload_list[cont-1]
+        com1.sendData(package_generator(3,numPck,cont,len(payload),0,cont-1,payload))
+        print("Pacote enviado com sucesso!")
+        timer1 = time.time()
+        timer2 = time.time()
+        while (com1.rx.getIsEmpty() and (time.time() - timer1) < 5):
             pass
-        txSize = com1.tx.getStatus()
-        print('enviou = {}' .format(txSize))
-        
-        #Agora vamos iniciar a recepção dos dados. Se algo chegou ao RX, deve estar automaticamente guardado
-        #Observe o que faz a rotina dentro do thread RX
-        #print um aviso de que a recepção vai começar.
-        
-        #Será que todos os bytes enviados estão realmente guardadas? Será que conseguimos verificar?
-        #Veja o que faz a funcao do enlaceRX  getBufferLen
-      
-        #acesso aos bytes recebidos
-        txLen = len(txBuffer)
-        rxBuffer, nRx = com1.getData(txLen)
-        print("recebeu {} bytes" .format(len(rxBuffer)))
-        
-        for i in range(len(rxBuffer)):
-            print("recebeu {}" .format(rxBuffer[i]))
-        
-
-        print("Salvando imagem")
-        print(" - {}".format(imageW))
-        with open(imageW, 'wb') as f:
-            f.write(rxBuffer)
-
+        if not(com1.rx.getIsEmpty()):
+            rxBuffer, nRx = com1.getData(14)
+            print("cheguei aqui", rxBuffer)
+            if rxBuffer[0] == 4 and rxBuffer[7] == cont:
+                print("O recibimento do pacote foi confirmado! Enviando o próximo...")
+                print(f"Timer 1: {timer1}")
+                print(f"Timer 2: {timer2}")
+                cont += 1
+                timer1 = time.time()
+                timer2 = time.time()
+            elif rxBuffer[0] == 6:
+                cont = rxBuffer[6]
+                print(f"O pacote {cont} foi solicitado para reenvio!")
+                timer1 = time.time()
+                timer2 = time.time()
             
+        com1.rx.clearBuffer()
+    com1.disable()
+    exit()
     
-        # Encerra comunicação
-        print("-------------------------")
-        print("Comunicação encerrada")
-        print("-------------------------")
-        com1.disable()
-        
+if __name__ == "__main__":
+    try:
+        main()
     except Exception as erro:
         print("ops! :-\\")
         print(erro)
         com1.disable()
-        
-
-    #so roda o main quando for executado do terminal ... se for chamado dentro de outro modulo nao roda
-if __name__ == "__main__":
-    main()
