@@ -1,5 +1,6 @@
 def head_generator(h0=0, h1=0, h2=0, h3=0, h4=0, h5=0, h6=0, h7=0, h8=0, h9=0):
-    return bytearray([h0, h1, h2, h3, h4, h5, h6, h7, h8, h9])
+    head = h0.to_bytes(1, byteorder='little') + h1.to_bytes(1, byteorder='little') + h2.to_bytes(1, byteorder='little') + h3.to_bytes(1, byteorder='little') + h4.to_bytes(1, byteorder='little') + h5.to_bytes(1, byteorder='little') + h6.to_bytes(1, byteorder='little') + h7.to_bytes(1, byteorder='little') + h8.to_bytes(1, byteorder='little') + h9.to_bytes(1, byteorder='little')
+    return head
 
 def separa_imagem(img):
     list_payloads = []
