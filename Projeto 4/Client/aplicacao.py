@@ -78,13 +78,12 @@ def main():
             string = write_log(string, 'envio', 3, len(payload), cont, numPck)
             time.sleep(.1)
             timer1 = time.time()
-            print(f"O pacote {cont} foi enviado com sucesso!")
+            print(f"O pacote {cont} foi enviado.")
             while (com1.rx.getIsEmpty() and (time.time() - timer1) < 5):
                 pass
             if not(com1.rx.getIsEmpty()):
                 rxBuffer, nRx = com1.getData(14)
                 string = write_log(string, 'recebimento', rxBuffer[0], rxBuffer[5], rxBuffer[4], rxBuffer[3])
-                print("cheguei aqui", rxBuffer)
                 if rxBuffer[0] == 4 and rxBuffer[7] == cont:
                     print("O recibimento do pacote foi confirmado! Enviando o próximo...")
                     cont += 1
@@ -104,7 +103,7 @@ def main():
                 print("Log gerado.")
             exit()
         else:
-            print("A comunicação será encerrada pois foi excedido o tempo de 20s")
+            print("A comunicação será encerrada, pois foi excedido o tempo de 20s")
             com1.sendData(package_generator(5,0,0,0,0,0,b''))
             string = write_log(string, 'envio', 5, 0, 0, 0)
             com1.disable()
