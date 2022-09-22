@@ -30,7 +30,7 @@ tipo 2 = mensagem enviada pelo servidor confirmando handshake
 
 def main():
 
-    payload_list = separa_imagem('Projeto 4/Client/gragas.png')
+    payload_list = separa_imagem('Client/gragas.png')
     numPck = len(payload_list)
 
     print("Tamanho da lista: " + str(numPck))
@@ -47,14 +47,18 @@ def main():
     print("Bit de sacrificio enviado com sucesso!")
     time.sleep(.1)
 
+    string = ''
+
     while not(inicia):
         print("Iniciando o handshake...")
         handshake = package_generator(1,numPck,0,1,0,0,b'')
         com1.sendData(handshake)
+        string = write_log(string, 'envio', 1, 0, 0, 0)
         print("Handshake enviado!")
         time.sleep(5)
         if not(com1.rx.getIsEmpty()):
             rxBuffer, nRx = com1.getData(14)
+            string = write_log(string, 'recebimento', rxBuffer[0], rxBuffer[5], rxBuffer[4], rxBuffer[3])
             if rxBuffer[0] == 2 and rxBuffer[5] == 1:
                 print("Handshake realizado com sucesso!")
                 inicia = True
@@ -67,7 +71,11 @@ def main():
         
         while (time.time() - timer2) < 20 and cont <= numPck:
             payload = payload_list[cont-1]
-            com1.sendData(package_generator(3,numPck,cont,len(payload),0,cont-1,payload))
+            package = package_generator(3,numPck,cont,len(payload),0,cont-1,payload)
+            package_error = package_generator(3,numPck,cont+randint(0,1),len(payload),0,cont-1,payload)
+            com1.sendData(package)
+            #com1.sendData(package_error)
+            string = write_log(string, 'envio', 3, len(payload), cont, numPck)
             time.sleep(.1)
             timer1 = time.time()
             print(f"O pacote {cont} foi enviado com sucesso!")
@@ -75,6 +83,7 @@ def main():
                 pass
             if not(com1.rx.getIsEmpty()):
                 rxBuffer, nRx = com1.getData(14)
+                string = write_log(string, 'recebimento', rxBuffer[0], rxBuffer[5], rxBuffer[4], rxBuffer[3])
                 print("cheguei aqui", rxBuffer)
                 if rxBuffer[0] == 4 and rxBuffer[7] == cont:
                     print("O recibimento do pacote foi confirmado! Enviando o próximo...")
@@ -90,16 +99,23 @@ def main():
         if cont == numPck+1:
             print("Todos os pacotes foram enviados com sucesso!")
             com1.disable()
+            with open('Client/log.txt', 'w') as f:
+                f.write(string)
+                print("Log gerado.")
             exit()
         else:
             print("A comunicação será encerrada pois foi excedido o tempo de 20s")
             com1.sendData(package_generator(5,0,0,0,0,0,b''))
+            string = write_log(string, 'envio', 5, 0, 0, 0)
             com1.disable()
+            with open('Client/log.txt', 'w') as f:
+                f.write(string)
+                print("Log gerado.")
             exit()
-    
 if __name__ == "__main__":
     try:
         main()
+
     except Exception as erro:
         print("ops! :-\\")
         print(erro)
