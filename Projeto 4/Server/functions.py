@@ -28,6 +28,9 @@ def package_generator(h0, h3, h4, h5, h6, h7, payload):
 def write_log (string, envio, tipo, tamanho, indice, total_packages):
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    log = f'{dt_string} / {envio}/{tipo}/{tamanho}/{indice}{total_packages}\n'
+    log = f'{dt_string} / {envio}/{tipo}/{tamanho}/'
+    if tipo == 3:
+        log += f'{indice}/{total_packages}'
+    log += '\n'
     string += log
     return string
