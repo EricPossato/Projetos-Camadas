@@ -1,6 +1,8 @@
+from tkinter import W
 from enlace import *
 import time
 import numpy as np
+from random import randint
 from functions import *
 
 serialName = "COM6"      
@@ -60,35 +62,40 @@ def main():
         com1.rx.clearBuffer()
 
     while cont <= numPck:   
-        print("----------------------------")
-        print("Enviando pacote: ")
-        print("----------------------------")
-        payload = payload_list[cont-1]
-        com1.sendData(package_generator(3,numPck,cont,len(payload),0,cont-1,payload))
-        print("Pacote enviado com sucesso!")
         timer1 = time.time()
         timer2 = time.time()
-        while (com1.rx.getIsEmpty() and (time.time() - timer1) < 5):
-            pass
-        if not(com1.rx.getIsEmpty()):
-            rxBuffer, nRx = com1.getData(14)
-            print("cheguei aqui", rxBuffer)
-            if rxBuffer[0] == 4 and rxBuffer[7] == cont:
-                print("O recibimento do pacote foi confirmado! Enviando o próximo...")
-                print(f"Timer 1: {timer1}")
-                print(f"Timer 2: {timer2}")
-                cont += 1
-                timer1 = time.time()
-                timer2 = time.time()
-            elif rxBuffer[0] == 6:
-                cont = rxBuffer[6]
-                print(f"O pacote {cont} foi solicitado para reenvio!")
-                timer1 = time.time()
-                timer2 = time.time()
-            
-        com1.rx.clearBuffer()
-    com1.disable()
-    exit()
+        
+        while (time.time() - timer2) < 20 and cont <= numPck:
+            payload = payload_list[cont-1]
+            com1.sendData(package_generator(3,numPck,cont,len(payload),0,cont-1,payload))
+            time.sleep(.1)
+            timer1 = time.time()
+            print(f"O pacote {cont} foi enviado com sucesso!")
+            while (com1.rx.getIsEmpty() and (time.time() - timer1) < 5):
+                pass
+            if not(com1.rx.getIsEmpty()):
+                rxBuffer, nRx = com1.getData(14)
+                print("cheguei aqui", rxBuffer)
+                if rxBuffer[0] == 4 and rxBuffer[7] == cont:
+                    print("O recibimento do pacote foi confirmado! Enviando o próximo...")
+                    cont += 1
+                    timer2 = time.time()
+                    com1.rx.clearBuffer()
+                elif rxBuffer[0] == 6:
+                    cont = rxBuffer[6]
+                    print(f"O pacote {cont} foi solicitado para reenvio!")
+                    timer2 = time.time()
+            com1.rx.clearBuffer()
+                
+        if cont == numPck+1:
+            print("Todos os pacotes foram enviados com sucesso!")
+            com1.disable()
+            exit()
+        else:
+            print("A comunicação será encerrada pois foi excedido o tempo de 20s")
+            com1.sendData(package_generator(5,0,0,0,0,0,b''))
+            com1.disable()
+            exit()
     
 if __name__ == "__main__":
     try:
