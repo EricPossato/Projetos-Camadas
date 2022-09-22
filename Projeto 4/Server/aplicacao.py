@@ -46,7 +46,7 @@ def main():
         ocioso = True
         while ocioso:
             head, nRx = com1.getData(10)
-            string = write_log(string, 'receb', head[0], head[5], 0, 0)
+            string = write_log(string, 'receb', head[0], head[5], head[4], head[3])
             time.sleep(.1)
             print(f"{head}")
             if head[0] == 1 and head[5] == 1:
@@ -55,6 +55,7 @@ def main():
             time.sleep(1)
         msg_t2 = package_generator(2,0,0,1,0,0, payload = b'')
         com1.sendData(msg_t2)
+        string = write_log(string, 'envio', 2, 1, 0, 0)
         time.sleep(.1)
         print(f'Na escuta')
         cont = 1
@@ -70,15 +71,21 @@ def main():
                 ocioso = True
                 msg_t5 = package_generator(5,0,0,1,0,0, payload = b'')
                 com1.sendData(msg_t5)
+                string = write_log(string, 'envio', 5, 1, 0, 0)
                 print("-------------------------")
                 print("Comunicação encerrada")
                 print("-------------------------")
+                if string != '':
+                    with open('Server/log.txt', 'w') as f:
+                        f.write(string)
+                        print("Log gerado")
                 com1.disable()
                 exit()
             
             #recepção do pacote
             else:
                 head, nRx = com1.getData(10)
+                string = write_log(string, 'receb', head[0], head[5], head[4], head[3])
                 time.sleep(.1)
 
                 indexPck = head[4]
@@ -95,6 +102,7 @@ def main():
                 if indexPck != cont or eop != EOP:
                     msg_t6 = package_generator(6,0,0,1,cont,cont-1, payload = b'')
                     com1.sendData(msg_t6)
+                    string = write_log(string, 'envio', 6, 1, 0, 0)
                     print("Pacote corrompido")
                     com1.rx.clearBuffer()
                     time.sleep(.1)
@@ -102,6 +110,7 @@ def main():
                     arquivo += payload
                     msg_t4 = package_generator(4,0,0,1,0,cont, payload = b'')
                     com1.sendData(msg_t4)
+                    string = write_log(string, 'envio', 4, 1, 0, 0)
                     time.sleep(0.1)
                     cont += 1
 
@@ -116,7 +125,10 @@ def main():
             with open('imgRecebida.png', 'wb') as f:
                 f.write(arquivo)
                 print("Arquivo recebido")
-        
+        if string != '':
+            with open('Server/log.txt', 'w') as f:
+                f.write(string)
+                print("Log gerado")
     except Exception as erro:
         print("ops! :-\\")
         print(erro)
