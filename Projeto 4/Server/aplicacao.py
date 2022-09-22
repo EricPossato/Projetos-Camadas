@@ -29,6 +29,7 @@ EOP = b'\xAA\xBB\xCC\xDD'
 def main():
     try:
         arquivo = b''
+        string = ''
         print("Iniciou o main")
         com1 = enlace(serialName)
         com1.enable()
@@ -45,6 +46,7 @@ def main():
         ocioso = True
         while ocioso:
             head, nRx = com1.getData(10)
+            string = write_log(string, 'receb', head[0], head[5], 0, 0)
             time.sleep(.1)
             print(f"{head}")
             if head[0] == 1 and head[5] == 1:
@@ -53,6 +55,7 @@ def main():
             time.sleep(1)
         msg_t2 = package_generator(2,0,0,1,0,0, payload = b'')
         com1.sendData(msg_t2)
+        time.sleep(.1)
         print(f'Na escuta')
         cont = 1
 
