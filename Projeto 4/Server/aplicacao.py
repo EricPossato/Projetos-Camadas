@@ -15,6 +15,7 @@ from enlace import *
 import time
 import numpy as np
 from functions import *
+from crc import CrcCalculator, Crc16
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
 #   python -m serial.tools.list_ports
@@ -85,7 +86,6 @@ def main():
             #recepção do pacote
             else:
                 head, nRx = com1.getData(10)
-                string = write_log(string, 'receb', head[0], head[5], head[4], head[3])
                 time.sleep(.1)
 
                 indexPck = head[4]
@@ -98,8 +98,17 @@ def main():
                 time.sleep(.1)
                 print(f"Indice do packote atual:{cont}")
 
+                #verifica erro com o CRC
+                expected_crc = head[8].to_bytes(1, 'little') + head[9].to_bytes(1, 'little')
+                calculator = CrcCalculator(Crc16.CCITT)
+                crc = calculator.calculate_checksum(payload)
+                crc = crc.to_bytes(2, byteorder='little')
+
+                string = write_log(string, 'receb', head[0], head[5], head[4], head[3], crc)
+
+
                 #verifica erro no pacote
-                if indexPck != cont or eop != EOP:
+                if indexPck != cont or eop != EOP or crc != expected_crc:
                     msg_t6 = package_generator(6,0,0,1,cont,cont-1, payload = b'')
                     com1.sendData(msg_t6)
                     string = write_log(string, 'envio', 6, 1, 0, 0)
