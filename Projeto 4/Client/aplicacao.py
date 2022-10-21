@@ -67,7 +67,14 @@ def main():
         
         while (time.time() - timer2) < 20 and cont <= numPck:
             payload = payload_list[cont-1]
-            com1.sendData(package_generator(3,numPck,cont,len(payload),0,cont-1,payload))
+            package = package_generator(3,numPck,cont,len(payload),0,cont-1,payload)
+            package_error = package_generator(3,numPck,cont+randint(0,1),len(payload),0,cont-1,payload)
+            com1.sendData(package)
+            #com1.sendData(package_error)
+            h8, h9 = checksum(payload)
+            crc = h8 + h9
+            print(crc)
+            string = write_log(string, 'envio', 3, len(payload), cont, numPck, crc)
             time.sleep(.1)
             timer1 = time.time()
             print(f"O pacote {cont} foi enviado com sucesso!")
@@ -96,7 +103,7 @@ def main():
             com1.sendData(package_generator(5,0,0,0,0,0,b''))
             com1.disable()
             exit()
-    
+
 if __name__ == "__main__":
     try:
         main()
