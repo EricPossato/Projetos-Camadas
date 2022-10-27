@@ -16,6 +16,24 @@ def todB(s):
 
 
 def main():
+    frequencias = {
+        '1': (697, 1209),
+        '2': (697, 1336),
+        '3': (697, 1477),
+        'A': (697, 1633),
+        '4': (770, 1209),
+        '5': (770, 1336),
+        '6': (770, 1477),
+        'B': (770, 1633),
+        '7': (852, 1209),
+        '8': (852, 1336),
+        '9': (852, 1477),
+        'C': (852, 1633),
+        '*': (941, 1209),
+        '0': (941, 1336),
+        '#': (941, 1477),
+        'D': (941, 1633)
+    }
 
     #*****************************instruções********************************
  
@@ -78,6 +96,7 @@ def main():
     freq1 = xf[index1]
     freq2 = xf[index2]
     freqs = [freq1, freq2]
+    freqs_confirmadas = []
 
     
 
@@ -87,6 +106,20 @@ def main():
     print("amplitudes {}" .format(amplitudes))
     signal.plotFFT(dados, freqDeAmostragem)
     frequencias_possiveis = [697, 770, 852, 941, 1209, 1336, 1477, 1633]
+    for freq in freqs:
+        menor_delta = 100000
+        for freq_possivel in frequencias_possiveis:
+            delta = abs(freq - freq_possivel)
+            if delta < menor_delta:
+                menor_delta = delta
+                freq_menor_delta = freq_possivel
+        freqs_confirmadas.append(freq_menor_delta)
+    
+    for key,value in frequencias.items():
+        if value == freqs_confirmadas:
+            print(f'A tecla pressionada foi {key}')
+            break
+        
     # Aqui você deverá tomar o seguinte cuidado: A funcao  peakutils.indexes retorna as POSICOES dos picos. Não os valores das frequências onde ocorrem! Pense a respeito
     
     #encontre na tabela duas frequencias proximas às frequencias de pico encontradas e descubra qual foi a tecla
