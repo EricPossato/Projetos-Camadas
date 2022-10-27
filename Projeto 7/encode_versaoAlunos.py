@@ -35,7 +35,7 @@ def main():
     
     # construa o gráfico do sinal emitido e o gráfico da transformada de Fourier. Cuidado. Como as frequencias sao relativamente altas, voce deve plotar apenas alguns pontos (alguns periodos) para conseguirmos ver o sinal
 
-    t = 1
+    t = 7
     A = 1
     f = 48000
     frequencias = {
