@@ -93,6 +93,7 @@ def main():
     print("picos {}" .format(picos))
     print("amplitudes {}" .format(amplitudes))
     maiores_amplitudes = heapq.nlargest(2, amplitudes)
+    print("maiores_amplitudes {}" .format(maiores_amplitudes))
     
     index1 = index[amplitudes == maiores_amplitudes[1]]
     index2 = index[amplitudes == maiores_amplitudes[0]]
@@ -118,10 +119,10 @@ def main():
                 menor_delta = delta
                 freq_menor_delta = freq_possivel
         freqs_confirmadas.append(freq_menor_delta)
-        print(f'frequencias: {freqs_confirmadas}')
+    print(f'frequencias: {freqs_confirmadas}')
     
     for key,value in frequencias.items():
-        if value == (freqs_confirmadas[0], freqs_confirmadas[1]):
+        if value == (freqs_confirmadas[0], freqs_confirmadas[1]) or value == (freqs_confirmadas[1], freqs_confirmadas[0]):
             print(f'A tecla pressionada foi {key}')
             break
         
