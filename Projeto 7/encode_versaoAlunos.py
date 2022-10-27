@@ -4,6 +4,7 @@ from suaBibSignal import *
 import numpy as np
 import sounddevice as sd
 import matplotlib.pyplot as plt
+import sys
 
 #funções a serem utilizadas
 def signal_handler(signal, frame):
@@ -33,19 +34,47 @@ def main():
     # Grave o som com seu celular ou qualquer outro microfone. Cuidado, algumas placas de som não gravam sons gerados por elas mesmas. (Isso evita microfonia).
     
     # construa o gráfico do sinal emitido e o gráfico da transformada de Fourier. Cuidado. Como as frequencias sao relativamente altas, voce deve plotar apenas alguns pontos (alguns periodos) para conseguirmos ver o sinal
-    
+
+    t = 1
+    A = 1
+    f = 48000
+    frequencias = {
+        '1': (697, 1209),
+        '2': (697, 1336),
+        '3': (697, 1477),
+        'A': (697, 1633),
+        '4': (770, 1209),
+        '5': (770, 1336),
+        '6': (770, 1477),
+        'B': (770, 1633),
+        '7': (852, 1209),
+        '8': (852, 1336),
+        '9': (852, 1477),
+        'C': (852, 1633),
+        '*': (941, 1209),
+        '0': (941, 1336),
+        '#': (941, 1477),
+        'D': (941, 1633)
+    }
+    lista_t = np.linspace(0, t, f*t)
+    freq = frequencias[input('Digite um número de 0 a 9 ou um dos caracteres A, B, C, D, *, #: ').upper()]
+    lista_senoides1 = A*np.sin(2*np.pi*freq[0]*lista_t)
+    lista_senoides2 = A*np.sin(2*np.pi*freq[1]*lista_t)
+    sinal = lista_senoides1 + lista_senoides2
+
 
     print("Inicializando encoder")
+    print("Digite uma tecla do teclado numérico DTMF")
     print("Aguardando usuário")
     print("Gerando Tons base")
     print("Executando as senoides (emitindo o som)")
-    print("Gerando Tom referente ao símbolo : {}".format(NUM))
-    sd.play(tone, fs)
+
+    sd.play(sinal, f)
     # Exibe gráficos
     plt.show()
     # aguarda fim do audio
     sd.wait()
-    plotFFT(self, signal, fs)
+    #AplotFFT(self, sinal, fs)
     
 
 if __name__ == "__main__":
