@@ -34,10 +34,9 @@ def main():
     
     # construa o gráfico do sinal emitido e o gráfico da transformada de Fourier. Cuidado. Como as frequencias sao relativamente altas, voce deve plotar apenas alguns pontos (alguns periodos) para conseguirmos ver o sinal
     
-
     print("Inicializando encoder")
     print("Aguardando usuário")
-    print("Gerando Tons base")
+    print("Gerando Tons base")  
     print("Executando as senoides (emitindo o som)")
     print("Gerando Tom referente ao símbolo : {}".format(NUM))
     sd.play(tone, fs)
