@@ -86,13 +86,16 @@ def main():
     # "thres" determina a sensibilidade da funcao, ou seja, quao elevado tem que ser o valor do pico para de fato ser considerado um pico
     #"min_dist" é relatico tolerancia. Ele determina quao próximos 2 picos identificados podem estar, ou seja, se a funcao indentificar um pico na posicao 200, por exemplo, só identificara outro a partir do 200+min_dis. Isso evita que varios picos sejam identificados em torno do 200, uma vez que todos sejam provavelmente resultado de pequenas variações de uma unica frequencia a ser identificada.   
     # Comece com os valores:
-    index = peakutils.indexes(yf, thres=0.4, min_dist=50)
+    index = peakutils.indexes(yf, thres=0.3, min_dist=50)
     print("index de picos {}" .format(index)) #yf é o resultado da transformada de fourier
     picos = xf[index]
     amplitudes = yf[index]
+    print("picos {}" .format(picos))
+    print("amplitudes {}" .format(amplitudes))
     maiores_amplitudes = heapq.nlargest(2, amplitudes)
-    index1 = index[amplitudes == maiores_amplitudes[0]]
-    index2 = index[amplitudes == maiores_amplitudes[1]]
+    
+    index1 = index[amplitudes == maiores_amplitudes[1]]
+    index2 = index[amplitudes == maiores_amplitudes[0]]
     freq1 = xf[index1]
     freq2 = xf[index2]
     freqs = [freq1, freq2]
@@ -102,8 +105,6 @@ def main():
 
 
     #printe os picos encontrados! 
-    print("picos {}" .format(picos))
-    print("amplitudes {}" .format(amplitudes))
     signal.plotFFT(dados, freqDeAmostragem)
     frequencias_possiveis = [697, 770, 852, 941, 1209, 1336, 1477, 1633]
     for freq in freqs:
@@ -114,9 +115,10 @@ def main():
                 menor_delta = delta
                 freq_menor_delta = freq_possivel
         freqs_confirmadas.append(freq_menor_delta)
+        print(f'frequencias: {freqs_confirmadas}')
     
     for key,value in frequencias.items():
-        if value == freqs_confirmadas:
+        if value == (freqs_confirmadas[0], freqs_confirmadas[1]):
             print(f'A tecla pressionada foi {key}')
             break
         
