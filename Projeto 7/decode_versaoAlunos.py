@@ -1,5 +1,6 @@
 
 #Importe todas as bibliotecas
+import heapq
 from suaBibSignal import *
 import peakutils    #alternativas  #from detect_peaks import *   #import pickle
 import numpy as np
@@ -21,20 +22,24 @@ def main():
     #declare um objeto da classe da sua biblioteca de apoio (cedida)   
     # algo como:
     signal = signalMeu() 
+    tempo = 3
+    freqDeAmostragem = 48000
        
     #voce importou a bilioteca sounddevice como, por exemplo, sd. entao
     # os seguintes parametros devem ser setados:
-    sd.default.samplerate = #taxa de amostragem
-    sd.default.channels = #numCanais # o numero de canais, tipicamente são 2. Placas com dois canais. Se ocorrer problemas pode tentar com 1. No caso de 2 canais, ao gravar um audio, terá duas listas
+    sd.default.samplerate = freqDeAmostragem
+    sd.default.channels = 2 # o numero de canais, tipicamente são 2. Placas com dois canais. Se ocorrer problemas pode tentar com 1. No caso de 2 canais, ao gravar um audio, terá duas listas
     duration =  tempo # #tempo em segundos que ira aquisitar o sinal acustico captado pelo mic
-    
+    numAmostras =  freqDeAmostragem * duration # #numero de amostras que serao captadas
     #calcule o numero de amostras "numAmostras" que serao feitas (numero de aquisicoes) durante a gracação. Para esse cálculo você deverá utilizar a taxa de amostragem e o tempo de gravação
 
     #faca um print na tela dizendo que a captacao comecará em n segundos. e entao 
     #use um time.sleep para a espera
+    print("A captura começará em 3 segundos")
+    time.sleep(3)
    
     #Ao seguir, faca um print informando que a gravacao foi inicializada
-
+    print("Gravando...")
     #para gravar, utilize
     audio = sd.rec(int(numAmostras), freqDeAmostragem, channels=1)
     sd.wait()
@@ -42,14 +47,17 @@ def main():
 
 
     #analise sua variavel "audio". pode ser um vetor com 1 ou 2 colunas, lista, isso dependerá so seu sistema, drivers etc...
+    print(f'audio: {audio}')
     #extraia a parte que interessa da gravação (as amostras) gravando em uma variável "dados". Isso porque a variável audio pode conter dois canais e outas informações). 
+    dados = audio[:,0]
+    print(f'dados: {dados}')
     
     # use a funcao linspace e crie o vetor tempo. Um instante correspondente a cada amostra!
   
     # plot do áudio gravado (dados) vs tempo! Não plote todos os pontos, pois verá apenas uma mancha (freq altas) . 
        
     ## Calcule e plote o Fourier do sinal audio. como saida tem-se a amplitude e as frequencias
-    xf, yf = signal.calcFFT(y, fs)
+    xf, yf = signal.calcFFT(dados, freqDeAmostragem)
     
     #agora, voce tem os picos da transformada, que te informam quais sao as frequencias mais presentes no sinal. Alguns dos picos devem ser correspondentes às frequencias do DTMF!
     #Para descobrir a tecla pressionada, voce deve extrair os picos e compara-los à tabela DTMF
@@ -62,8 +70,23 @@ def main():
     # Comece com os valores:
     index = peakutils.indexes(yf, thres=0.4, min_dist=50)
     print("index de picos {}" .format(index)) #yf é o resultado da transformada de fourier
+    picos = xf[index]
+    amplitudes = yf[index]
+    maiores_amplitudes = heapq.nlargest(2, amplitudes)
+    index1 = index[amplitudes == maiores_amplitudes[0]]
+    index2 = index[amplitudes == maiores_amplitudes[1]]
+    freq1 = xf[index1]
+    freq2 = xf[index2]
+    freqs = [freq1, freq2]
+
+    
+
 
     #printe os picos encontrados! 
+    print("picos {}" .format(picos))
+    print("amplitudes {}" .format(amplitudes))
+    signal.plotFFT(dados, freqDeAmostragem)
+    frequencias_possiveis = [697, 770, 852, 941, 1209, 1336, 1477, 1633]
     # Aqui você deverá tomar o seguinte cuidado: A funcao  peakutils.indexes retorna as POSICOES dos picos. Não os valores das frequências onde ocorrem! Pense a respeito
     
     #encontre na tabela duas frequencias proximas às frequencias de pico encontradas e descubra qual foi a tecla
