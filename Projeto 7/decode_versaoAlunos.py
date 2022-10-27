@@ -50,7 +50,7 @@ def main():
     duration =  tempo # #tempo em segundos que ira aquisitar o sinal acustico captado pelo mic
     numAmostras =  freqDeAmostragem * duration # #numero de amostras que serao captadas
     #calcule o numero de amostras "numAmostras" que serao feitas (numero de aquisicoes) durante a gracação. Para esse cálculo você deverá utilizar a taxa de amostragem e o tempo de gravação
-
+    lista_t = np.linspace(0, tempo, numAmostras)
     #faca um print na tela dizendo que a captacao comecará em n segundos. e entao 
     #use um time.sleep para a espera
     print("A captura começará em 3 segundos")
@@ -105,6 +105,9 @@ def main():
 
 
     #printe os picos encontrados! 
+    plt.plot(lista_t[::1000], dados[::1000])
+    plt.show()
+
     signal.plotFFT(dados, freqDeAmostragem)
     frequencias_possiveis = [697, 770, 852, 941, 1209, 1336, 1477, 1633]
     for freq in freqs:
