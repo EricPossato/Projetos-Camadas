@@ -6,6 +6,7 @@ import peakutils    #alternativas  #from detect_peaks import *   #import pickle
 import numpy as np
 import sounddevice as sd
 import matplotlib.pyplot as plt
+import soundfile as sf
 import time
 import scipy
 
@@ -26,26 +27,29 @@ def main():
     fs = 48000
     f_portadora = 14000
     A=1
+
+    
        
     #voce importou a bilioteca sounddevice como, por exemplo, sd. entao
     # os seguintes parametros devem ser setados:
     sd.default.samplerate = fs
     sd.default.channels = 2 # o numero de canais, tipicamente são 2. Placas com dois canais. Se ocorrer problemas pode tentar com 1. No caso de 2 canais, ao gravar um audio, terá duas listas
-    duration =  tempo # #tempo em segundos que ira aquisitar o sinal acustico captado pelo mic
-    numAmostras =  fs * duration # #numero de amostras que serao captadas
-    lista_t = np.linspace(0, tempo, numAmostras)
+    audio, fs = sf.read('somModulado.wav')
+    dados = audio
+    #get audio duration
+    duration = len(dados)/fs
+    numAmostras =  int(fs * duration) # #numero de amostras que serao captadas
+    lista_t = np.linspace(0, duration, numAmostras)
 
 
-    print("A captura começará em 3 segundos")
-    time.sleep(3)
-    print("Gravando...")
-    audio = sd.rec(int(numAmostras), fs, channels=1)
-    sd.wait()
-    print("...     FIM")
+    # print("A captura começará em 3 segundos")
+    # time.sleep(3)
+    # print("Gravando...")
+    # audio = sd.rec(int(numAmostras), fs, channels=1)
+    # sd.wait()
+    # print("...     FIM")
 
-
- 
-    dados = audio[:,0]
+    
 
 
 
@@ -79,8 +83,8 @@ def main():
     sd.play(audio_filtrado, fs)
     sd.wait()
 
-    #save audio in .wav file
-    scipy.io.wavfile.write("audio_filtrado.wav", fs, audio_filtrado)
+    #save audio in .wav file using soundfile
+    sf.write('somDemodulado.wav', audio_filtrado, fs)
 
 if __name__ == "__main__":
     main()
