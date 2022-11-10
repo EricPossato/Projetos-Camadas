@@ -65,6 +65,7 @@ def main():
 
     #plot FFT sinal demodulado
     signal.plotFFT(sinalDemodulado, fs)
+    plt.title("Fourier do sinal demodulado")
     plt.show()
 
     #filters frequencies above 2200hz
