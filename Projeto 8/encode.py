@@ -43,56 +43,56 @@ def main():
     A = 1
     f = 48000
     f_portadora = 14000
-    data, fs = sf.read('Projeto 8/barrril.wav')
-    data = np.array(data)
-    data1 = data[:,0]
-    data2 = data[:,1]
-    dataMono = (data1 + data2)/2
+    audioData, fs = sf.read('barrilmtforte.wav')
+    print(fs)
+    audioData = np.array(audioData)
+    audioData1 = audioData[:,0]
+    audioData2 = audioData[:,1]
+    dataMono = (audioData1 + audioData2)/2
     lista_t = np.linspace(0, len(dataMono)/fs, len(dataMono))
     #filters frequencies above 2200hz
     b, a = scipy.signal.butter(5, 2200, 'low', fs=fs)
-    dataMono = scipy.signal.filtfilt(b, a, dataMono)
+    audioNormalizado = dataMono/np.max(np.abs(dataMono))
+    audioFiltrado = scipy.signal.filtfilt(b, a, audioNormalizado)
+    #plot gráfico do audio normalizado
     plt.figure()
-    plt.plot(lista_t[::500], dataMono[::500])
-    plt.title('Sinal de audio filtrado')
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Amplitude')
-    plt.show()
-
-    #normalize dataMono to amplitude between -1 and 1
-    dataMono = dataMono/np.max(np.abs(dataMono))
-    #plot dataMono
-    plt.figure()
-    plt.plot(lista_t[::500], dataMono[::500])
+    plt.plot(lista_t[::500], audioNormalizado[::500])
     plt.title('Sinal de audio normalizado')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Amplitude')
     plt.show()
-    #plot fft
-    signal.plotFFT(dataMono, fs)
-    #play dataMono
-    sd.play(dataMono, fs)
-    
-
-    print(dataMono)
+    #plot do gráfico do audio filtrado
+    plt.figure()
+    plt.plot(lista_t[::500], audioFiltrado[::500])
+    plt.title('Sinal de audio filtrado')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Amplitude')
+    plt.show()
+    #Plot gráfico da transformada de Fourier do audio filtrado
+    signal.plotFFT(audioFiltrado, fs, title = 'Transformada de Fourier do audio filtrado')
     senoide = A*np.sin(2*np.pi*f_portadora*lista_t)
     som = senoide*dataMono
+    #Plot do gráfico do som modulado
     plt.figure()
     plt.plot(lista_t[::500], som[::500])
     plt.title('Sinal de audio modulado')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Amplitude')
     plt.show()
-    signal.plotFFT(som, fs)
-    #sd.play(som,fs)
-
+    #Plot gráfico da transformada de Fourier do som modulado
+    signal.plotFFT(som, fs, title = 'Transformada de Fourier do som modulado')
+    
+    sd.play(audioNormalizado, fs)
+    input('Aperte qualquer tecla para reproduzir o som modulado')
+    sd.play(som, fs)
     #sd.play(dataMono, 48000)
     # Exibe gráficos
     plt.show()
     # aguarda fim do audio
     sd.wait()
     #AplotFFT(self, sinal, fs)
-    
+    #save audio as .wav file
+    sf.write('somModulado.wav', som, fs)
 
 if __name__ == "__main__":
     main()
