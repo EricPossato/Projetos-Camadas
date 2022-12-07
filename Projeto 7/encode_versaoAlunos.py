@@ -17,6 +17,25 @@ def todB(s):
     return(sdB)
 
 
+# Para calcular o tamanho do arquivo de audio: (Frequencia * Duração * Canais * BitsResolucao) / 8
+# Regra de 3 simples para frequencias maiores
+# 44100 ----- 5s
+# 48000 ----- x
+# Como é inversamente proporcional, basta inverter a equação
+# 44100 * 5 / 48000 = x
+# X = 4.593s
+
+# Regra de três para clocks do processador
+# N_clocks = T_uart / (2*T_CPU)
+
+# Para calcular o tempo minimo de envio:
+# Descobrir o numero de pacotes = Tamanho do arquivo / Tamanho do payload
+# Caso tenha resto, arrendondar para cima
+# Calcular quantos bytes falta para completar o ultimo pacote
+# É o resto da divisão do tamanho do arquivo por tamanho do payload
+# Calcular o tempo mínimo de envio
+# 1/baudrate * (numero de pacotes * tamanhototal * bits) + (tamanhoPacoteBytesFaltantes * bits * 1/baudrate)
+
 
 
 def main():
@@ -35,7 +54,7 @@ def main():
     
     # construa o gráfico do sinal emitido e o gráfico da transformada de Fourier. Cuidado. Como as frequencias sao relativamente altas, voce deve plotar apenas alguns pontos (alguns periodos) para conseguirmos ver o sinal
 
-    t = 7
+    t = 5
     A = 1
     f = 48000
     frequencias = {
@@ -61,11 +80,6 @@ def main():
     lista_senoides1 = A*np.sin(2*np.pi*freq[0]*lista_t)
     lista_senoides2 = A*np.sin(2*np.pi*freq[1]*lista_t)
     sinal = lista_senoides1 + lista_senoides2
-
-
-    print("Inicializando encoder")
-    print("Digite uma tecla do teclado numérico DTMF")
-    print("Aguardando usuário")
     print("Gerando Tons base")
     print("Executando as senoides (emitindo o som)")
 
